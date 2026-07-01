@@ -440,7 +440,7 @@ function showDayDetail(day) {
     let html = `<div class="detail-header">
         <div class="detail-date">7月${day}日 · ${['日','一','二','三','四','五','六'][new Date(2026,6,day).getDay()]}</div>
         <div class="detail-title">${d.title}</div>
-        <div class="detail-subtitle">${d.subtitle}</div>
+        <div class="detail-subtitle">${d.sub}</div>
         <div class="detail-badge ${getBadgeClass(d.type)}">${d.type === 'strength' ? '力量训练' : d.type === 'cardio' ? '有氧训练' : d.type === 'yoga' ? '瑜伽恢复' : '休息恢复'}</div>
     </div>`;
 
