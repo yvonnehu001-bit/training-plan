@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1C1C1E">
+    <title>7月训练计划</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23FF6B6B'/%3E%3Ctext x='90' y='110' font-size='90' text-anchor='middle' fill='white'%3E💪%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg: #F2F2F7;
+            --card: #FFFFFF;
+            --text: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --accent: #FF6B6B;
+            --accent-light: #FFE5E5;
+            --success: #34C759;
+            --success-light: #E5F5E9;
+            --warning: #FF9500;
+            --info: #34C759;
+            --rest: #AF52DE;
+            --rest-light: #F3E5F5;
+            --cardio: #34C759;
+            --cardio-light: #E5F5E9;
+            --yoga: #AF52DE;
+            --yoga-light: #F3E5F5;
+            --period: #FF2D55;
+            --period-light: #FFE5EC;
+            --border: #E5E5EA;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        body { padding-bottom: 80px; padding-top: env(safe-area-inset-top); }
+
+        /* Header */
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(242,242,247,0.92); backdrop-filter: blur(20px);
+            padding: 12px 16px 8px; border-bottom: 1px solid var(--border);
+        }
+        .header-title { font-size: 28px; font-weight: 700; }
+        .header-sub { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
+        .progress-bar {
+            height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--accent); border-radius: 3px;
+            transition: width 0.5s ease; width: 0%;
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom);
+            display: flex; justify-content: space-around; align-items: center; height: 60px; z-index: 100;
+        }
+        .tab-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-secondary); font-size: 10px; cursor: pointer; transition: color 0.2s; padding: 8px 20px; }
+        .tab-item.active { color: var(--accent); }
+        .tab-item svg { width: 24px; height: 24px; }
+
+        /* Views */
+        .view { display: none; padding: 16px; animation: fadeIn 0.3s; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Calendar */
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 12px;
+        }
+        .weekday-label {
+            text-align: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 4px 0;
+        }
+        .day-cell {
+            aspect-ratio: 1; border-radius: 14px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; position: relative;
+            background: var(--card); box-shadow: var(--shadow); transition: transform 0.15s, box-shadow 0.15s;
+            border: 2px solid transparent; overflow: hidden;
+        }
+        .day-cell:active { transform: scale(0.95); }
+        .day-cell.today { border-color: var(--accent); }
+        .day-cell.completed::after {
+            content: '✓'; position: absolute; top: 3px; right: 5px; font-size: 10px;
+            color: var(--success); font-weight: bold;
+        }
+        .day-cell.period { background: var(--period-light); }
+        .day-cell.rest-day { background: var(--rest-light); }
+        .day-cell.strength { background: var(--accent-light); }
+        .day-cell.cardio { background: var(--cardio-light); }
+        .day-cell.yoga { background: var(--yoga-light); }
+        .day-number { font-size: 16px; font-weight: 600; }
+        .day-icon { font-size: 18px; margin-top: 1px; }
+        .day-partial { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: var(--success); border-radius: 0 0 12px 12px; }
+
+        .month-info {
+            background: var(--card); border-radius: 16px; padding: 16px; margin-top: 16px; box-shadow: var(--shadow);
+        }
+        .month-info h3 { font-size: 16px; margin-bottom: 8px; }
+        .stat-row { display: flex; justify-content: space-between; gap: 12px; }
+        .stat-card {
+            flex: 1; background: var(--bg); border-radius: 12px; padding: 12px; text-align: center;
+        }
+        .stat-value { font-size: 24px; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* Day Detail */
+        .detail-header {
+            background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+        }
+        .detail-date { font-size: 14px; color: var(--text-secondary); }
+        .detail-title { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .detail-subtitle { font-size: 15px; color: var(--text-secondary); margin-top: 2px; }
+        .detail-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;
+            margin-top: 10px;
+        }
+        .badge-strength { background: var(--accent-light); color: #C0392B; }
+        .badge-cardio { background: var(--cardio-light); color: #27AE60; }
+        .badge-rest { background: var(--rest-light); color: #8E44AD; }
+        .badge-yoga { background: var(--yoga-light); color: #8E44AD; }
+        .badge-period { background: var(--period-light); color: #C0392B; }
+
+        .exercise-card {
+            background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px;
+            box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
+            transition: background 0.2s;
+        }
+        .exercise-card.done { background: var(--success-light); }
+        .exercise-checkbox {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+            color: white; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+        }
+        .exercise-checkbox.checked { background: var(--success); border-color: var(--success); }
+        .exercise-info { flex: 1; }
+        .exercise-name { font-size: 16px; font-weight: 600; }
+        .exercise-meta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .exercise-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-style: italic; }
+
+        .complete-btn {
+            width: 100%; padding: 16px; border-radius: 16px; border: none;
+            background: var(--accent); color: white; font-size: 17px; font-weight: 600;
+            cursor: pointer; margin-top: 8px; box-shadow: var(--shadow); transition: transform 0.15s;
+        }
+        .complete-btn:active { transform: scale(0.98); }
+        .complete-btn.all-done { background: var(--success); }
+
+        .detail-notes {
+            background: var(--card); border-radius: 16px; padding: 16px; margin-top: 12px;
+            box-shadow: var(--shadow); font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+        }
+
+        /* Progress View */
+        .progress-view { padding-top: 8px; }
+        .progress-card {
+            background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+        }
+        .progress-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+        .progress-ring-wrap { display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+        .progress-ring { position: relative; width: 160px; height: 160px; }
+        .progress-ring svg { transform: rotate(-90deg); }
+        .progress-ring-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+        .progress-ring-fill { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+        .progress-ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .progress-ring-val { font-size: 36px; font-weight: 700; color: var(--accent); }
+        .progress-ring-label { font-size: 12px; color: var(--text-secondary); }
+
+        .mini-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .mini-bar-label { width: 60px; font-size: 13px; color: var(--text-secondary); }
+        .mini-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .mini-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .mini-bar-val { width: 40px; font-size: 13px; font-weight: 600; text-align: right; }
+
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+        .week-dot { aspect-ratio: 1; border-radius: 50%; background: var(--border); }
+        .week-dot.done { background: var(--success); }
+        .week-dot.period { background: var(--period); opacity: 0.4; }
+        .week-dot.rest { background: var(--rest); opacity: 0.4; }
+        .week-dot.strength { background: var(--accent); }
+        .week-dot.cardio { background: var(--cardio); }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px; color: var(--accent);
+            font-size: 15px; font-weight: 600; margin-bottom: 12px; cursor: pointer; border: none; background: none;
+        }
+
+        .install-tip {
+            background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px;
+            box-shadow: var(--shadow); font-size: 14px; line-height: 1.6; color: var(--text-secondary);
+            border-left: 4px solid var(--accent);
+        }
+        .install-tip strong { color: var(--text); }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header" id="header">
+        <div class="header-title" id="headerTitle">7月训练计划</div>
+        <div class="header-sub" id="headerSub">💪 体成分重组 · 50kg → 精瘦</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div id="calendarView" class="view active">
+        <div class="install-tip" id="installTip">
+            <strong>💡 添加到主屏幕</strong><br>
+            点击 Safari 分享按钮 → "添加到主屏幕"，即可像 App 一样使用，离线也能查看！
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="month-info">
+            <h3>📊 本月概览</h3>
+            <div class="stat-row">
+                <div class="stat-card"><div class="stat-value" id="statStrength">0</div><div class="stat-label">力量日</div></div>
+                <div class="stat-card"><div class="stat-value" id="statCardio">0</div><div class="stat-label">有氧日</div></div>
+                <div class="stat-card"><div class="stat-value" id="statRest">0</div><div class="stat-label">恢复日</div></div>
+                <div class="stat-card"><div class="stat-value" id="statDone">0</div><div class="stat-label">已完成</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailView" class="view">
+        <button class="back-btn" onclick="showCalendar()">← 返回日历</button>
+        <div id="detailContent"></div>
+    </div>
+
+    <div id="progressView" class="view progress-view">
+        <div class="progress-card">
+            <h3>🎯 本月完成度</h3>
+            <div class="progress-ring-wrap">
+                <div class="progress-ring">
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                        <circle class="progress-ring-bg" cx="80" cy="80" r="70"/>
+                        <circle class="progress-ring-fill" id="progressRing" cx="80" cy="80" r="70" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+                    </svg>
+                    <div class="progress-ring-text">
+                        <div class="progress-ring-val" id="ringVal">0%</div>
+                        <div class="progress-ring-label">已完成</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mini-bar">
+                <div class="mini-bar-label">力量日</div>
+                <div class="mini-bar-track"><div class="mini-bar-fill" id="barStrength" style="background:#FF6B6B;width:0%"></div></div>
+                <div class="mini-bar-val" id="valStrength">0/0</div>
+            </div>
+            <div class="mini-bar">
+                <div class="mini-bar-label">有氧日</div>
+                <div class="mini-bar-track"><div class="mini-bar-fill" id="barCardio" style="background:#34C759;width:0%"></div></div>
+                <div class="mini-bar-val" id="valCardio">0/0</div>
+            </div>
+            <div class="mini-bar">
+                <div class="mini-bar-label">恢复日</div>
+                <div class="mini-bar-track"><div class="mini-bar-fill" id="barRest" style="background:#AF52DE;width:0%"></div></div>
+                <div class="mini-bar-val" id="valRest">0/0</div>
+            </div>
+        </div>
+
+        <div class="progress-card">
+            <h3>📅 本月训练日历</h3>
+            <div class="week-grid" id="weekGrid"></div>
+            <div class="legend" style="margin-top:12px">
+                <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div>力量</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#34C759"></div>有氧</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#AF52DE"></div>恢复</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#FF2D55;opacity:0.4"></div>经期</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#34C759"></div>✓ 完成</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab-item active" onclick="switchTab('calendar')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>日历</span>
+        </div>
+        <div class="tab-item" onclick="switchTab('progress')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span>进度</span>
+        </div>
+    </div>
+
+<script>
+const trainingData = [
+    {day:1, title:"经期前激活", sub:"散步 + 拉伸", type:"rest", period:false, exercises:[{n:"散步",s:"1",r:"6000步",note:"轻松散步"},{n:"动态拉伸",s:"1",r:"10分钟",note:"全身热身"},{n:"泡沫轴放松",s:"1",r:"10分钟",note:"下肢放松"}]},
+    {day:2, title:"经期前最后激活", sub:"瑜伽 + 散步", type:"rest", period:false, exercises:[{n:"舒缓瑜伽",s:"1",r:"20分钟",note:"猫牛式、婴儿式、鸽子式"},{n:"散步",s:"1",r:"30分钟",note:"轻松节奏"}]},
+    {day:3, title:"姨妈 Day 1", sub:"🩸 完全休息", type:"rest", period:true, exercises:[{n:"完全休息",s:"1",r:"全天",note:"多喝温水，腹部保暖"}]},
+    {day:4, title:"姨妈 Day 2", sub:"🩸 完全休息", type:"rest", period:true, exercises:[{n:"完全休息",s:"1",r:"全天",note:"可做床上拉伸或阴瑜伽"}]},
+    {day:5, title:"姨妈 Day 3", sub:"🩸 主动恢复", type:"rest", period:true, exercises:[{n:"散步",s:"1",r:"20分钟",note:"身体无不适可做"},{n:"深呼吸",s:"1",r:"10分钟",note:"冥想放松"}]},
+    {day:6, title:"姨妈 Day 4", sub:"🩸 准备恢复", type:"rest", period:true, exercises:[{n:"散步",s:"1",r:"30分钟",note:"轻松节奏"},{n:"关节活动",s:"1",r:"5分钟",note:"绕肩、髋绕环、踝绕环"}]},
+    {day:7, title:"下肢力量 · 基础日", sub:"⭐ 首练", type:"strength", period:false, exercises:[{n:"高脚杯深蹲",s:"3",r:"12次",note:"膝盖对准脚尖，蹲至大腿平行"},{n:"罗马尼亚硬拉",s:"3",r:"12次",note:"感受腘绳肌拉伸，哑铃贴小腿下落"},{n:"臀桥",s:"3",r:"15次",note:"顶峰收缩2秒，可加哑铃置髋部"},{n:"箭步蹲（原地）",s:"3",r:"10次/腿",note:"步幅大一点，重心垂直上下"},{n:"单腿硬拉",s:"2",r:"10次/腿",note:"练平衡，轻重量"},{n:"平板支撑",s:"3",r:"30秒",note:"核心收紧收尾"}]},
+    {day:8, title:"主动恢复日", sub:"空腹有氧", type:"cardio", period:false, exercises:[{n:"空腹快走",s:"1",r:"40分钟",note:"心率110-120，早起做"},{n:"全身拉伸",s:"1",r:"15分钟",note:"重点下肢"}]},
+    {day:9, title:"上肢推 + 核心", sub:"力量训练", type:"strength", period:false, exercises:[{n:"跪姿/标准俯卧撑",s:"3",r:"8-12次",note:"保证质量，跪姿做不满就降次数"},{n:"哑铃卧推",s:"3",r:"12次",note:"下落时大臂与身体呈45°"},{n:"哑铃坐姿肩推",s:"3",r:"12次",note:"核心收紧，不耸肩"},{n:"哑铃侧平举",s:"2",r:"15次",note:"轻重量，控制速度"},{n:"平板支撑",s:"3",r:"30-40秒",note:"核心稳定"},{n:"死虫式",s:"3",r:"10次/侧",note:"对侧手脚伸展，腰贴地"}]},
+    {day:10, title:"休息日", sub:"放松恢复", type:"rest", period:false, exercises:[{n:"日常走动",s:"1",r:"8000步",note:"正常活动"},{n:"颈肩拉伸",s:"1",r:"5分钟",note:"低头族必做"}]},
+    {day:11, title:"下肢 + 臀", sub:"力量训练", type:"strength", period:false, exercises:[{n:"相扑深蹲",s:"3",r:"12次",note:"宽站距，脚尖外八，针对大腿内侧和臀大肌"},{n:"臀推",s:"3",r:"15次",note:"上背部靠凳子，顶峰挤压臀部"},{n:"保加利亚分腿蹲",s:"3",r:"10次/腿",note:"后脚抬高，可用椅子"},{n:"侧抬腿",s:"2",r:"15次/侧",note:"针对臀中肌，改善臀型"},{n:"站姿提踵",s:"2",r:"15次",note:"小腿线条"},{n:"鸟狗式",s:"3",r:"10次/侧",note:"核心稳定"}]},
+    {day:12, title:"低强度有氧日", sub:"空腹有氧", type:"cardio", period:false, exercises:[{n:"空腹快走/爬坡",s:"1",r:"40分钟",note:"心率120-130"},{n:"全身拉伸",s:"1",r:"15分钟",note:"放松"}]},
+    {day:13, title:"上肢拉 + 核心", sub:"力量训练", type:"strength", period:false, exercises:[{n:"哑铃俯身划船",s:"3",r:"12次/臂",note:"背部发力，不耸肩"},{n:"高位下拉/弹力带",s:"3",r:"12次",note:"居家可用弹力带替代"},{n:"反向飞鸟",s:"3",r:"15次",note:"针对后束，改善圆肩"},{n:"面拉/Y字举",s:"2",r:"15次",note:"肩后束/上背"},{n:"俄罗斯转体",s:"3",r:"20次",note:"持哑铃或徒手"},{n:"侧平板支撑",s:"2",r:"20秒/侧",note:"核心侧面"}]},
+    {day:14, title:"下肢 + 全身复合", sub:"加重", type:"strength", period:false, exercises:[{n:"高脚杯深蹲",s:"4",r:"12次",note:"加重，比上周加5-10%"},{n:"罗马尼亚硬拉",s:"4",r:"10-12次",note:"加重"},{n:"壶铃/哑铃摇摆",s:"3",r:"15次",note:"爆发力，臀腿发力"},{n:"箭步蹲行走",s:"3",r:"10次/腿",note:"拿着哑铃走"},{n:"波比跳（简化版）",s:"2",r:"8次",note:"无俯卧撑，心肺冲击"},{n:"平板支撑",s:"3",r:"40秒",note:"核心收尾"}]},
+    {day:15, title:"休息 + 散步", sub:"主动恢复", type:"rest", period:false, exercises:[{n:"日常散步",s:"1",r:"10000步",note:"傍晚散步最佳"}]},
+    {day:16, title:"上肢推 + 核心", sub:"加重", type:"strength", period:false, exercises:[{n:"标准/跪姿俯卧撑",s:"3",r:"10-12次",note:"尝试标准，做不动再跪姿"},{n:"哑铃地板卧推",s:"4",r:"10-12次",note:"加重"},{n:"阿诺德推举",s:"3",r:"12次",note:"哑铃从胸前旋转推起"},{n:"哑铃侧平举",s:"3",r:"12-15次",note:"控制速度"},{n:"三头臂屈伸",s:"2",r:"10次",note:"椅子后撑"},{n:"死虫式",s:"3",r:"12次/侧",note:"腰贴地"},{n:"卷腹",s:"3",r:"15次",note:"上腹"}]},
+    {day:17, title:"低强度有氧", sub:"心肺恢复", type:"cardio", period:false, exercises:[{n:"爬坡/椭圆机/快走",s:"1",r:"35分钟",note:"心率120-130"},{n:"拉伸",s:"1",r:"10分钟",note:"全身放松"}]},
+    {day:18, title:"下肢 + 臀", sub:"冲容量", type:"strength", period:false, exercises:[{n:"相扑深蹲",s:"4",r:"12次",note:"加重"},{n:"臀推",s:"4",r:"12-15次",note:"加重，顶峰停3秒"},{n:"保加利亚分腿蹲",s:"3",r:"10次/腿",note:"加哑铃"},{n:"单腿硬拉",s:"3",r:"10次/腿",note:"加重"},{n:"蚌式开合",s:"2",r:"20次/侧",note:"弹力带"},{n:"臀桥保持",s:"2",r:"30秒",note:"静态burn"}]},
+    {day:19, title:"拉伸恢复", sub:"主动恢复", type:"rest", period:false, exercises:[{n:"全身拉伸",s:"1",r:"20分钟",note:"流瑜伽或静态拉伸"},{n:"泡沫轴放松",s:"1",r:"15分钟",note:"下肢、背部"},{n:"散步",s:"1",r:"30分钟",note:"轻松"}]},
+    {day:20, title:"上肢拉 + 核心", sub:"加重", type:"strength", period:false, exercises:[{n:"哑铃俯身划船",s:"4",r:"10-12次/臂",note:"加重"},{n:"高位下拉/弹力带",s:"4",r:"10-12次",note:"加重"},{n:"反向飞鸟",s:"3",r:"15次",note:"控制"},{n:"俯身Y-T-W",s:"2",r:"8次/字母",note:"后肩/菱形肌"},{n:"俄罗斯转体",s:"3",r:"25次",note:"核心"},{n:"侧平板支撑",s:"3",r:"25秒/侧",note:"侧面核心"},{n:"鸟狗式",s:"3",r:"12次/侧",note:"稳定"}]},
+    {day:21, title:"下肢 + 全身", sub:"高强度", type:"strength", period:false, exercises:[{n:"高脚杯深蹲",s:"4",r:"10-12次",note:"大重量"},{n:"罗马尼亚硬拉",s:"4",r:"8-10次",note:"本周最大重量"},{n:"壶铃/哑铃摇摆",s:"3",r:"20次",note:"爆发力"},{n:"跳箱/台阶跳",s:"2",r:"8次",note:"爆发力，注意安全"},{n:"箭步蹲跳",s:"2",r:"10次/腿",note:"简化版可原地"},{n:"平板支撑转体",s:"3",r:"8次/侧",note:"从平板侧转伸手"}]},
+    {day:22, title:"空腹有氧", sub:"燃脂", type:"cardio", period:false, exercises:[{n:"早起快走/爬坡",s:"1",r:"45分钟",note:"心率120-130"},{n:"早餐",s:"1",r:"30分钟内",note:"2个蛋+燕麦/红薯"}]},
+    {day:23, title:"上肢推 + 核心", sub:"超级组", type:"strength", period:false, exercises:[{n:"超级组1: 俯卧撑→平板支撑",s:"3",r:"10次/30秒",note:"连续做，不休息"},{n:"超级组2: 哑铃卧推→死虫式",s:"3",r:"10-12次/10次",note:"连续做"},{n:"超级组3: 哑铃肩推→侧平板",s:"3",r:"10次/20秒",note:"连续做"},{n:"侧平举",s:"3",r:"12次",note:"单独做"}]},
+    {day:24, title:"休息日", sub:"放松", type:"rest", period:false, exercises:[{n:"日常走动",s:"1",r:"8000步",note:"正常活动"},{n:"颈肩拉伸",s:"1",r:"5分钟",note:"放松"}]},
+    {day:25, title:"下肢 + 臀", sub:"极限容量日", type:"strength", period:false, exercises:[{n:"相扑深蹲",s:"4",r:"10-12次",note:"大重量，做完接小重量1组×15次"},{n:"臀推",s:"4",r:"10-12次",note:"大重量，超级组drop set"},{n:"保加利亚分腿蹲",s:"3",r:"10次/腿",note:"控制离心，3秒下落"},{n:"单腿臀桥",s:"3",r:"12次/腿",note:"顶峰收缩"},{n:"侧抬腿+蚌式开合",s:"2",r:"15+20次/侧",note:"组合做"},{n:"深蹲保持",s:"1",r:"20秒",note:"底部静止，最后的burn"}]},
+    {day:26, title:"上肢拉 + 核心", sub:"力量收尾", type:"strength", period:false, exercises:[{n:"哑铃俯身划船",s:"4",r:"10次/臂",note:"大重量"},{n:"高位下拉/弹力带",s:"4",r:"10-12次",note:"加重"},{n:"反向飞鸟",s:"3",r:"12-15次",note:"控制"},{n:"面拉/Y字举",s:"3",r:"12次",note:"肩后束"},{n:"直臂下拉/后摆",s:"2",r:"12次",note:"背阔肌"},{n:"俄罗斯转体+卷腹",s:"3",r:"20+15次",note:"超级组"},{n:"平板支撑",s:"2",r:"45秒",note:"核心"}]},
+    {day:27, title:"瑜伽恢复", sub:"身心放松", type:"rest", period:false, exercises:[{n:"全身流瑜伽",s:"1",r:"30分钟",note:"跟练视频"},{n:"泡沫轴放松",s:"1",r:"20分钟",note:"全身"},{n:"散步",s:"1",r:"20分钟",note:"轻松"}]},
+    {day:28, title:"全身力量循环", sub:"循环训练", type:"strength", period:false, exercises:[{n:"高脚杯深蹲",s:"4轮",r:"12次",note:"循环第1个动作"},{n:"哑铃卧推",s:"4轮",r:"10次",note:"循环第2个动作"},{n:"罗马尼亚硬拉",s:"4轮",r:"10次",note:"循环第3个动作"},{n:"哑铃划船",s:"4轮",r:"10次/臂",note:"循环第4个动作"},{n:"箭步蹲",s:"4轮",r:"8次/腿",note:"循环第5个动作"},{n:"俯卧撑",s:"4轮",r:"8-10次",note:"循环第6个动作"},{n:"平板支撑",s:"1",r:"1分钟",note:"4轮结束后收尾"}], notes:"6个动作连续做，中间休息15秒，做完一轮休90秒，共4轮"},
+    {day:29, title:"低强度有氧", sub:"燃脂", type:"cardio", period:false, exercises:[{n:"快走/爬坡/椭圆机",s:"1",r:"35分钟",note:"心率120"},{n:"拉伸",s:"1",r:"10分钟",note:"放松"}]},
+    {day:30, title:"上肢推拉超级组", sub:"本月上肢收官", type:"strength", period:false, exercises:[{n:"超级组1: 俯卧撑→划船",s:"3",r:"10次",note:"推完马上拉"},{n:"超级组2: 肩推→反向飞鸟",s:"3",r:"10/12次",note:"连续做"},{n:"超级组3: 侧平举→面拉",s:"3",r:"12次",note:"连续做"},{n:"死虫式",s:"2",r:"10次/侧",note:"核心"},{n:"俄罗斯转体",s:"2",r:"20次",note:"核心"},{n:"平板支撑",s:"2",r:"40秒",note:"核心收尾"}]},
+    {day:31, title:"全身功能性 + 有氧", sub:"7月收官", type:"strength", period:false, exercises:[{n:"开合跳",s:"2",r:"2分钟",note:"热身"},{n:"高抬腿",s:"2",r:"2分钟",note:"热身"},{n:"壶铃/哑铃摇摆",s:"3",r:"15次",note:"功能性"},{n:"深蹲推举",s:"3",r:"10次",note:"全身"},{n:"弓步转体",s:"2",r:"10次/侧",note:"核心旋转"},{n:"波比跳（简化）",s:"2",r:"6次",note:"心肺"},{n:"快走/慢跑",s:"1",r:"20分钟",note:"有氧"},{n:"全身拉伸+深呼吸",s:"1",r:"10分钟",note:"放松收官"}]}
+];
+
+const STORAGE_KEY = 'training_progress_v1';
+
+function getProgress() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : {};
+    } catch(e) { return {}; }
+}
+
+function saveProgress(progress) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+}
+
+function getDayProgress(day) {
+    const p = getProgress();
+    return p[day] || { exercises: {}, completed: false };
+}
+
+function toggleExercise(day, idx) {
+    const p = getProgress();
+    if (!p[day]) p[day] = { exercises: {}, completed: false };
+    if (!p[day].exercises) p[day].exercises = {};
+    p[day].exercises[idx] = !p[day].exercises[idx];
+    const d = trainingData.find(x => x.day === day);
+    const allDone = d.exercises.every((_,i) => p[day].exercises[i]);
+    p[day].completed = allDone;
+    saveProgress(p);
+    renderCalendar();
+    renderProgress();
+    if (document.getElementById('detailView').classList.contains('active')) {
+        showDayDetail(day);
+    }
+}
+
+function toggleDayComplete(day) {
+    const p = getProgress();
+    if (!p[day]) p[day] = { exercises: {}, completed: false };
+    const d = trainingData.find(x => x.day === day);
+    const allDone = !p[day].completed;
+    p[day].completed = allDone;
+    p[day].exercises = {};
+    d.exercises.forEach((_,i) => { p[day].exercises[i] = allDone; });
+    saveProgress(p);
+    renderCalendar();
+    renderProgress();
+    showDayDetail(day);
+}
+
+function getCategoryClass(type) {
+    return type === 'strength' ? 'strength' : type === 'cardio' ? 'cardio' : type === 'yoga' ? 'yoga' : 'rest';
+}
+
+function getBadgeClass(type) {
+    return type === 'strength' ? 'badge-strength' : type === 'cardio' ? 'badge-cardio' : type === 'yoga' ? 'badge-yoga' : 'badge-rest';
+}
+
+function getIcon(type) {
+    return type === 'strength' ? '💪' : type === 'cardio' ? '🏃' : type === 'yoga' ? '🧘' : '💤';
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const today = new Date().getDate();
+    const todayMonth = new Date().getMonth() + 1;
+    const isJuly = todayMonth === 7 && new Date().getFullYear() === 2026;
+
+    let html = '';
+    ['日','一','二','三','四','五','六'].forEach(d => {
+        html += `<div class="weekday-label">${d}</div>`;
+    });
+
+    const firstDay = 3; // July 1, 2026 is Wednesday
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div></div>';
+    }
+
+    trainingData.forEach(d => {
+        const dp = getDayProgress(d.day);
+        const completed = dp.completed;
+        const partial = !completed && d.exercises.some((_,i) => dp.exercises[i]);
+        const isToday = isJuly && d.day === today;
+        const catClass = getCategoryClass(d.type);
+        const icon = d.period ? '🩸' : getIcon(d.type);
+
+        html += `<div class="day-cell ${catClass} ${isToday ? 'today' : ''} ${completed ? 'completed' : ''} ${d.period ? 'period' : ''}" onclick="showDayDetail(${d.day})">
+            <div class="day-number">${d.day}</div>
+            <div class="day-icon">${icon}</div>
+            ${partial ? '<div class="day-partial"></div>' : ''}
+        </div>`;
+    });
+
+    grid.innerHTML = html;
+
+    // Stats
+    const strengthCount = trainingData.filter(d => d.type === 'strength').length;
+    const cardioCount = trainingData.filter(d => d.type === 'cardio').length;
+    const restCount = trainingData.filter(d => d.type === 'rest' || d.type === 'yoga').length;
+    const doneCount = trainingData.filter(d => getDayProgress(d.day).completed).length;
+    document.getElementById('statStrength').textContent = strengthCount;
+    document.getElementById('statCardio').textContent = cardioCount;
+    document.getElementById('statRest').textContent = restCount;
+    document.getElementById('statDone').textContent = doneCount;
+
+    // Header progress
+    const pct = Math.round((doneCount / trainingData.length) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function showDayDetail(day) {
+    const d = trainingData.find(x => x.day === day);
+    const dp = getDayProgress(day);
+    const allDone = dp.completed;
+
+    let html = `<div class="detail-header">
+        <div class="detail-date">7月${day}日 · ${['日','一','二','三','四','五','六'][new Date(2026,6,day).getDay()]}</div>
+        <div class="detail-title">${d.title}</div>
+        <div class="detail-subtitle">${d.subtitle}</div>
+        <div class="detail-badge ${getBadgeClass(d.type)}">${d.type === 'strength' ? '力量训练' : d.type === 'cardio' ? '有氧训练' : d.type === 'yoga' ? '瑜伽恢复' : '休息恢复'}</div>
+    </div>`;
+
+    d.exercises.forEach((ex, i) => {
+        const checked = dp.exercises[i] ? 'checked' : '';
+        const done = dp.exercises[i] ? 'done' : '';
+        html += `<div class="exercise-card ${done}">
+            <div class="exercise-checkbox ${checked}" onclick="toggleExercise(${day}, ${i})">${dp.exercises[i] ? '✓' : ''}</div>
+            <div class="exercise-info">
+                <div class="exercise-name">${ex.n}</div>
+                <div class="exercise-meta">${ex.s} × ${ex.r}</div>
+                <div class="exercise-note">${ex.note}</div>
+            </div>
+        </div>`;
+    });
+
+    if (d.notes) {
+        html += `<div class="detail-notes">💡 ${d.notes}</div>`;
+    }
+
+    html += `<button class="complete-btn ${allDone ? 'all-done' : ''}" onclick="toggleDayComplete(${day})">${allDone ? '✓ 今日训练已完成' : '标记今日训练全部完成'}</button>`;
+
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('calendarView').classList.remove('active');
+    document.getElementById('progressView').classList.remove('active');
+    document.getElementById('detailView').classList.add('active');
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+}
+
+function showCalendar() {
+    document.getElementById('detailView').classList.remove('active');
+    document.getElementById('progressView').classList.remove('active');
+    document.getElementById('calendarView').classList.add('active');
+    document.querySelectorAll('.tab-item')[0].classList.add('active');
+    document.querySelectorAll('.tab-item')[1].classList.remove('active');
+}
+
+function renderProgress() {
+    const total = trainingData.length;
+    const done = trainingData.filter(d => getDayProgress(d.day).completed).length;
+    const pct = Math.round((done / total) * 100);
+    const offset = 439.8 - (439.8 * pct / 100);
+    document.getElementById('ringVal').textContent = pct + '%';
+    document.getElementById('progressRing').style.strokeDashoffset = offset;
+
+    const strengthTotal = trainingData.filter(d => d.type === 'strength').length;
+    const strengthDone = trainingData.filter(d => d.type === 'strength' && getDayProgress(d.day).completed).length;
+    const cardioTotal = trainingData.filter(d => d.type === 'cardio').length;
+    const cardioDone = trainingData.filter(d => d.type === 'cardio' && getDayProgress(d.day).completed).length;
+    const restTotal = trainingData.filter(d => d.type === 'rest' || d.type === 'yoga').length;
+    const restDone = trainingData.filter(d => (d.type === 'rest' || d.type === 'yoga') && getDayProgress(d.day).completed).length;
+
+    document.getElementById('barStrength').style.width = (strengthDone / Math.max(strengthTotal,1) * 100) + '%';
+    document.getElementById('valStrength').textContent = strengthDone + '/' + strengthTotal;
+    document.getElementById('barCardio').style.width = (cardioDone / Math.max(cardioTotal,1) * 100) + '%';
+    document.getElementById('valCardio').textContent = cardioDone + '/' + cardioTotal;
+    document.getElementById('barRest').style.width = (restDone / Math.max(restTotal,1) * 100) + '%';
+    document.getElementById('valRest').textContent = restDone + '/' + restTotal;
+
+    // Week grid
+    let weekHtml = '';
+    trainingData.forEach(d => {
+        const dp = getDayProgress(d.day);
+        let cls = '';
+        if (dp.completed) cls = 'done';
+        else if (d.period) cls = 'period';
+        else if (d.type === 'rest' || d.type === 'yoga') cls = 'rest';
+        else if (d.type === 'strength') cls = 'strength';
+        else if (d.type === 'cardio') cls = 'cardio';
+        weekHtml += `<div class="week-dot ${cls}"></div>`;
+    });
+    document.getElementById('weekGrid').innerHTML = weekHtml;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    if (tab === 'calendar') {
+        document.getElementById('calendarView').classList.add('active');
+        document.querySelectorAll('.tab-item')[0].classList.add('active');
+    } else {
+        document.getElementById('progressView').classList.add('active');
+        document.querySelectorAll('.tab-item')[1].classList.add('active');
+        renderProgress();
+    }
+}
+
+// Hide install tip after a while
+setTimeout(() => {
+    const tip = document.getElementById('installTip');
+    if (tip && window.matchMedia('(display-mode: standalone)').matches) {
+        tip.style.display = 'none';
+    }
+}, 2000);
+
+// Register Service Worker for offline use
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Init
+renderCalendar();
+renderProgress();
+
+// Auto show today if it's July 2026
+const now = new Date();
+if (now.getFullYear() === 2026 && now.getMonth() === 6) {
+    showDayDetail(now.getDate());
+}
+</script>
+</body>
+</html>
